@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://i.hizliresim.com/hdfib03.png" alt="Carbonium-Lang" width="15%"/>
+</p>
+
 # Carbon Language: <br/> An experimental successor to C++
 # Carbonium aims to optimize to Carbon lang and refine some of the syntax
 
