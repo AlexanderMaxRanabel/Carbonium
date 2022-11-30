@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://i.hizliresim.com/hdfib03.png" alt="Carbonium-Lang" width="45%"/>
+<img src="https://i.hizliresim.com/hdfib03.png" alt="Carbonium-Lang" width="35%"/>
 </p>
 
 # Carbon Language: <br/> An experimental successor to C++
