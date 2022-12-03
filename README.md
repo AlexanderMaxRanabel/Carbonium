@@ -3,7 +3,7 @@
 </p>
 
 # Carbon Language: <br/> An experimental successor to C++
-# Carbonium aims to optimize to Carbon lang and refine some of the syntax
+# Carbonium aims to optimize to Carbon lang
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
