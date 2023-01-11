@@ -27,9 +27,15 @@ struct IndexBase {
   constexpr IndexBase() : index(InvalidIndex) {}
   constexpr explicit IndexBase(int index) : index(index) {}
 
-  auto Print(llvm::raw_ostream& output) const -> void { output << index; }
+  auto Print(llvm::raw_ostream& output) const -> void {
+    if (is_valid()) {
+      output << index;
+    } else {
+      output << "<invalid>";
+    }
+  }
 
-  auto is_valid() -> bool { return index != InvalidIndex; }
+  auto is_valid() const -> bool { return index != InvalidIndex; }
 
   int32_t index;
 };

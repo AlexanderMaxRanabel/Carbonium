@@ -9,10 +9,7 @@ cc_library(
     srcs = ["semantics_builtin_kind.cpp"],
     hdrs = ["semantics_builtin_kind.h"],
     textual_hdrs = ["semantics_builtin_kind.def"],
-    deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(
@@ -20,8 +17,34 @@ cc_library(
     srcs = ["semantics_node_kind.cpp"],
     hdrs = ["semantics_node_kind.h"],
     textual_hdrs = ["semantics_node_kind.def"],
+    deps = ["//toolchain/common:enum_base"],
+)
+
+cc_library(
+    name = "semantics_node",
+    srcs = ["semantics_node.cpp"],
+    hdrs = ["semantics_node.h"],
     deps = [
+        ":semantics_builtin_kind",
+        ":semantics_node_kind",
+        "//common:check",
         "//common:ostream",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "semantics_node_stack",
+    srcs = ["semantics_node_stack.cpp"],
+    hdrs = ["semantics_node_stack.h"],
+    deps = [
+        ":semantics_node",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/parser:parse_node_kind",
+        "//toolchain/parser:parse_tree",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -30,17 +53,16 @@ cc_library(
     name = "semantics_ir",
     srcs = [
         "semantics_ir.cpp",
-        "semantics_node.cpp",
         "semantics_parse_tree_handler.cpp",
     ],
     hdrs = [
         "semantics_ir.h",
-        "semantics_node.h",
         "semantics_parse_tree_handler.h",
     ],
     deps = [
         ":semantics_builtin_kind",
-        ":semantics_node_kind",
+        ":semantics_node",
+        ":semantics_node_stack",
         "//common:check",
         "//common:ostream",
         "//common:vlog",
@@ -49,6 +71,7 @@ cc_library(
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "//toolchain/parser:parse_tree_node_location_translator",
         "@llvm-project//llvm:Support",
     ],
 )

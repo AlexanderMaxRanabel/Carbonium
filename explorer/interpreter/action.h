@@ -256,9 +256,9 @@ class DeclarationAction : public Action {
 };
 
 // An Action which implements destroying all local allocations in a scope.
-class CleanupAction : public Action {
+class CleanUpAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope)
+  explicit CleanUpAction(RuntimeScope scope)
       : Action(Kind::CleanUpAction),
         allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));
@@ -281,7 +281,7 @@ class DestroyAction : public Action {
   // lvalue: Address of the object to be destroyed
   // value:  The value to be destroyed
   //         In most cases the lvalue address points to value
-  //         In the case that the member of a class is to be destroyed, points
+  //         In the case that the member of a class is to be destroyed,
   //         the lvalue points to the address of the class object
   //         and the value is the member of the class
   explicit DestroyAction(Nonnull<const LValue*> lvalue,
