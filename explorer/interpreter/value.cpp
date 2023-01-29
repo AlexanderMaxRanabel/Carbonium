@@ -698,6 +698,23 @@ void Value::Print(llvm::raw_ostream& out) const {
   }
 }
 
+void IntrinsicConstraint::Print(llvm::raw_ostream& out) const {
+  out << *type << " is ";
+  switch (kind) {
+    case IntrinsicConstraint::ImplicitAs:
+      out << "__intrinsic_implicit_as";
+      break;
+  }
+  if (!arguments.empty()) {
+    out << "(";
+    llvm::ListSeparator comma;
+    for (Nonnull<const Value*> argument : arguments) {
+      out << comma << *argument;
+    }
+    out << ")";
+  }
+}
+
 ContinuationValue::StackFragment::~StackFragment() {
   CARBON_CHECK(reversed_todo_.empty())
       << "All StackFragments must be empty before the Carbon program ends.";
@@ -1149,7 +1166,7 @@ auto FindFunction(std::string_view name,
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<CallableDeclaration>(*member);
+        const auto& fun = cast<FunctionDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
@@ -1177,7 +1194,7 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<CallableDeclaration>(*member);
+        const auto& fun = cast<FunctionDeclaration>(*member);
         if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }

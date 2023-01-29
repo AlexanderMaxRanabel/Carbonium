@@ -10,7 +10,11 @@
 //
 // The viable X-macros to define prior to including the header are:
 //
-// - `DIAGNOSTIC_KIND`
+// - `CARBON_DIAGNOSTIC_KIND`
+
+#ifndef CARBON_DIAGNOSTIC_KIND
+#error "Must define the x-macro to use this file."
+#endif
 
 // ============================================================================
 // Lexer diagnostics
@@ -88,6 +92,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeducedParam)
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 CARBON_DIAGNOSTIC_KIND(TypeMismatch)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)

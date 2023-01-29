@@ -29,6 +29,7 @@ namespace Carbon {
 class MixinPseudoType;
 class ConstraintType;
 class NominalClassType;
+class MatchFirstDeclaration;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -130,7 +131,7 @@ enum class VirtualOverride { None, Abstract, Virtual, Impl };
 
 class CallableDeclaration : public Declaration {
  public:
-  CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
+  CallableDeclaration(AstNodeKind kind, SourceLocation loc,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
@@ -138,7 +139,6 @@ class CallableDeclaration : public Declaration {
                       std::optional<Nonnull<Block*>> body,
                       VirtualOverride virt_override)
       : Declaration(kind, loc),
-        name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         self_pattern_(self_pattern),
         param_pattern_(param_pattern),
@@ -148,8 +148,6 @@ class CallableDeclaration : public Declaration {
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
-  // TODO: Move name() and name_ to FunctionDeclaration
-  auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
@@ -172,7 +170,6 @@ class CallableDeclaration : public Declaration {
   auto is_method() const -> bool { return self_pattern_.has_value(); }
 
  private:
-  std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::optional<Nonnull<Pattern*>> self_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
@@ -203,13 +200,18 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Block*>> body,
                       VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
-                            std::move(name), std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body,
-                            virt_override) {}
+                            std::move(deduced_params), self_pattern,
+                            param_pattern, return_term, body, virt_override),
+        name_(std::move(name)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
+
+  auto name() const -> const std::string& { return name_; }
+
+ private:
+  std::string name_;
 };
 
 class DestructorDeclaration : public CallableDeclaration {
@@ -231,8 +233,8 @@ class DestructorDeclaration : public CallableDeclaration {
                         ReturnTerm return_term,
                         std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
-                            "destructor", std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body,
+                            std::move(deduced_params), self_pattern,
+                            param_pattern, return_term, body,
                             // TODO: Add virtual destructors
                             VirtualOverride::None) {}
 
@@ -740,6 +742,17 @@ class ImplDeclaration : public Declaration {
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
+  // Set the enclosing match_first declaration. Should only be called once,
+  // during type-checking.
+  void set_match_first(Nonnull<const MatchFirstDeclaration*> match_first) {
+    match_first_ = match_first;
+  }
+  // Get the enclosing match_first declaration, if any exists.
+  auto match_first() const
+      -> std::optional<Nonnull<const MatchFirstDeclaration*>> {
+    return match_first_;
+  }
+
  private:
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;
@@ -749,6 +762,27 @@ class ImplDeclaration : public Declaration {
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  std::optional<Nonnull<const MatchFirstDeclaration*>> match_first_;
+};
+
+class MatchFirstDeclaration : public Declaration {
+ public:
+  MatchFirstDeclaration(SourceLocation source_loc,
+                        std::vector<Nonnull<ImplDeclaration*>> impls)
+      : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
+        impls_(std::move(impls)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMatchFirstDeclaration(node->kind());
+  }
+
+  auto impls() const -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impls_;
+  }
+  auto impls() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> { return impls_; }
+
+ private:
+  std::vector<Nonnull<ImplDeclaration*>> impls_;
 };
 
 class AliasDeclaration : public Declaration {

@@ -94,6 +94,7 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration: {
@@ -379,6 +380,11 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(ResolveNames(assign.rhs(), enclosing_scope));
       break;
     }
+    case StatementKind::IncrementDecrement: {
+      auto& inc_dec = cast<IncrementDecrement>(statement);
+      CARBON_RETURN_IF_ERROR(ResolveNames(inc_dec.argument(), enclosing_scope));
+      break;
+    }
     case StatementKind::VariableDefinition: {
       auto& def = cast<VariableDefinition>(statement);
       if (def.has_init()) {
@@ -558,12 +564,21 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
           ResolveMemberNames(impl.members(), impl_scope, bodies));
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      // A `match_first` declaration does not introduce a scope.
+      for (auto* impl : cast<MatchFirstDeclaration>(declaration).impls()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(*impl, enclosing_scope, bodies));
+      }
+      break;
+    }
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
-      enclosing_scope.MarkDeclared(function.name());
+      const auto name = GetName(function);
+      CARBON_CHECK(name) << "Unexpected missing name for `" << function << "`.";
+      enclosing_scope.MarkDeclared(std::string(*name));
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
@@ -577,7 +592,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(ResolveNames(
             **function.return_term().type_expression(), function_scope));
       }
-      enclosing_scope.MarkUsable(function.name());
+      enclosing_scope.MarkUsable(std::string(*name));
       if (function.body().has_value() &&
           bodies != ResolveFunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
